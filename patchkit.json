@@ -14,6 +14,7 @@
         "/1/apps/{app_secret}/changelog": {
             "get": {
                 "summary": "Gets changelog",
+                "description": "NOT IMPLEMENTED Gets a complete changelog of an application",
                 "parameters": [
                     {
                         "name": "app_secret",
@@ -61,6 +62,7 @@
         "/1/apps/{app_secret}/versions": {
             "get": {
                 "summary": "Gets versions info",
+                "description": "Gets the basic information for all published versions. When API Key is provided, draft version information is included if draft version exists.",
                 "parameters": [
                     {
                         "name": "app_secret",
@@ -91,7 +93,8 @@
                 }
             },
             "post": {
-                "summary": "Creates file",
+                "summary": "Creates version",
+                "description": "Creates a new version if there's no draft version yet.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -145,9 +148,112 @@
                 }
             }
         },
+        "/1/apps/{app_secret}/versions/{version_id}": {
+            "get": {
+                "summary": "Gets version",
+                "description": "Gets selected version object. If API key is provided, can get the information about draft version.",
+                "parameters": [
+                    {
+                        "name": "app_secret",
+                        "in": "path",
+                        "description": "Secret of an application.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "version_id",
+                        "in": "path",
+                        "description": "Initial version id",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "api_key",
+                        "in": "query",
+                        "required": false,
+                        "type": "string",
+                        "description": "Application owner API key"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/JobInfo"
+                        }
+                    },
+                    "403": {
+                        "description": "Invalid API key"
+                    },
+                    "404": {
+                        "description": "Version not found."
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Updates version",
+                "description": "Updates selected version properties. You can update any number of properties, because you're not required to pass all of them. Omited properties will remain unchanged.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "name": "app_secret",
+                        "in": "path",
+                        "description": "Secret of an application.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "version_id",
+                        "in": "path",
+                        "description": "Initial version id",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "api_key",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "Application owner API key"
+                    },
+                    {
+                        "name": "label",
+                        "in": "formData",
+                        "required": false,
+                        "type": "string",
+                        "description": "Version label"
+                    },
+                    {
+                        "name": "changelog",
+                        "in": "formData",
+                        "required": false,
+                        "type": "string",
+                        "description": "Description of changes"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/JobInfo"
+                        }
+                    },
+                    "403": {
+                        "description": "Invalid API key"
+                    },
+                    "404": {
+                        "description": "Version not found."
+                    }
+                }
+            }
+        },
         "/1/apps/{app_secret}/versions/{version_id}/content_file": {
             "put": {
-                "summary": "Updates file",
+                "summary": "Updates the draft version with given content file. Version needs to be processed afterwards, so a job guid is returned.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -204,7 +310,7 @@
         },
         "/1/apps/{app_secret}/versions/{version_id}/diff_file": {
             "put": {
-                "summary": "Updates diff file",
+                "summary": "Updates the draft version with given diff file. Version needs to be processed afterwards, so a job guid is returned.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -265,6 +371,45 @@
                     "Version"
                 ]
             }
+        },
+        "/1/apps/{app_secret}/versions/{version_id}/publish": {
+            "put": {
+                "summary": "Publishes version",
+                "description": "Publisher selected version. Given version should be a draft version.",
+                "parameters": [
+                    {
+                        "name": "app_secret",
+                        "in": "path",
+                        "description": "Secret of an application.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "version_id",
+                        "in": "path",
+                        "description": "Initial version id",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "api_key",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "Application owner API key"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version published sucessfully"
+                    }
+                },
+                "tags": [
+                    "App",
+                    "Version"
+                ]
+            }
         }
     },
     "definitions": {
@@ -275,6 +420,9 @@
                     "type": "string",
                     "description": "Job GUID to be used with Jobs API"
                 }
+            },
+            "example": {
+                "job_guid": "5776de94-56dc-4e8a-8992-1c1d9da1410c"
             }
         },
         "VersionInfo": {
@@ -311,6 +459,15 @@
                     "type": "boolean",
                     "description": "Set to true if this version is a draft version"
                 }
+            },
+            "example": {
+                "id": 1,
+                "label": "1.0",
+                "changelog": "log of changes",
+                "publish_date": 1467742723,
+                "content_guid": "56fdfa69-17d9-4585-9b8a-72729314c7a9",
+                "diff_guid": "5776de94-56dc-4e8a-8992-1c1d9da1410c",
+                "draft": true
             }
         }
     }
