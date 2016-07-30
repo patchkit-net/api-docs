@@ -48,7 +48,7 @@
         $(function () {
             var current_directory = window.location.pathname;
             current_directory = current_directory.substring(0, current_directory.lastIndexOf('/'));
-            var url = current_directory+"/patchkit.json";
+            var url = current_directory+"/swagger.json";
 
             var swaggerUi = new SwaggerUi({
                 url: url,
