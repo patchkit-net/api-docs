@@ -661,9 +661,6 @@ definitions:
       name:
         type: string
         description: Application name
-      launcher_download_url:
-        type: string
-        description: The public URL that the launcher can be downloaded from.
       patcher_secret:
         type: string
         description: The secret of patcher to use.
