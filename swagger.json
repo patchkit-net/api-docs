@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "PatchKit API",
         "contact": {
             "name": "API Support",
@@ -552,7 +552,7 @@
         "/apps/{app_secret}/versions/{version_id}/content_file": {
             "put": {
                 "summary": "Updates app version content file",
-                "description": "Updates the draft version with given content file. Version needs to be processed afterwards, so a job guid is returned.",
+                "description": "Updates the draft version with given content file. Version needs to be processed afterwards, so a job guid is returned. Should file or upload_id be passed.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -582,9 +582,16 @@
                     {
                         "name": "file",
                         "in": "formData",
-                        "required": true,
+                        "required": false,
                         "type": "file",
                         "description": "Zip file with application content."
+                    },
+                    {
+                        "name": "upload_id",
+                        "in": "formData",
+                        "required": false,
+                        "type": "integer",
+                        "description": "Id of upload entity."
                     }
                 ],
                 "responses": {
@@ -610,7 +617,7 @@
         "/apps/{app_secret}/versions/{version_id}/diff_file": {
             "put": {
                 "summary": "Updates version diff file",
-                "description": "Updates the draft version with given diff file. Version needs to be processed afterwards, so a job guid is returned.",
+                "description": "Updates the draft version with given diff file. Version needs to be processed afterwards, so a job guid is returned. Should file or upload_id be passed.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -640,9 +647,16 @@
                     {
                         "name": "file",
                         "in": "formData",
-                        "required": true,
+                        "required": false,
                         "type": "file",
                         "description": "Zip file with application binary diffs."
+                    },
+                    {
+                        "name": "upload_id",
+                        "in": "formData",
+                        "required": false,
+                        "type": "integer",
+                        "description": "Id of upload entity."
                     },
                     {
                         "name": "diff_summary",
@@ -710,13 +724,112 @@
                     "Version"
                 ]
             }
+        },
+        "/uploads": {
+            "post": {
+                "summary": "Creates a new upload",
+                "tags": [
+                    "Upload"
+                ],
+                "consumes": [
+                    "www/form-data"
+                ],
+                "parameters": [
+                    {
+                        "name": "total_size_bytes",
+                        "type": "integer",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "name": "api_key",
+                        "in": "query",
+                        "required": false,
+                        "type": "string",
+                        "description": "Application owner API key. Required when not using a session."
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Upload"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/uploads/{id}/chunk": {
+            "post": {
+                "summary": "Uploads a chunk",
+                "tags": [
+                    "Upload"
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "type": "integer",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "name": "chunk",
+                        "type": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "name": "api_key",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "Application owner API key. Required when not using a session."
+                    },
+                    {
+                        "name": "Content-Range",
+                        "in": "header",
+                        "required": true,
+                        "type": "string",
+                        "description": "RFC2616 Content-Range"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Upload"
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "Error": {
             "type": "object",
             "properties": {
-                "error": {
+                "message": {
                     "type": "string",
                     "description": "Human-readable error message"
                 }
@@ -913,6 +1026,14 @@
                 "url": {
                     "type": "string",
                     "description": "Url to diff file."
+                }
+            }
+        },
+        "Upload": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
                 }
             }
         }
